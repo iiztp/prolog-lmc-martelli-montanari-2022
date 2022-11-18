@@ -90,7 +90,7 @@ regle(X ?= T, expand) :- var(X), compound(T), not(occur_check(X, T)).
 
 % Prédicat d'occur-check
 % Vrai si X est une variable et que X apparaît dans T.
-regle(X ?= T, check) :- var(X), occur_check(X, T).
+regle(X ?= T, check) :- var(X), occur_check(X, T), X \== T.
 
 % Prédicat d'orientation
 % Vrai si T n'est pas une variable et que X est une variable.
