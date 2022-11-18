@@ -13,58 +13,9 @@ echo(_).
 
 :- set_echo, initialization(main, main).
 
-rule_test(X) :- (X -> echo('true') ; echo('false')).
-rule_test(X, R) :- echo('Test \''), echo(X), echo('\' : '), rule_test(regle(X, R)), echo('\n').
-rule_tests(R) :-
-    rule_test(X ?= Y, R),
-    rule_test(X ?= a, R),
-    rule_test(X ?= foo(a, Y), R),
-    rule_test(X ?= foo(a, X), R),
-    rule_test(foo(a, Y) ?= X, R),
-    rule_test(foo(a, X) ?= X, R),
-    rule_test(foo(X, Y) ?= foo(a, Y), R),
-    rule_test(foo(X, Y, Z) ?= foo(a, X), R),
-    rule_test(foo(a, Y) ?= bar(X, Y), R).
-
-reduct_test(reduit(R, X, [X], Q)) :- (reduit(R, X, [X], Q) -> echo([X]) ; echo('Unapplicable')).
-reduct_test(R, X) :- echo('Test \''), echo(X), echo('\' : '), reduct_test(reduit(R, X, [X], Q)), echo('\n').
-reduct_tests(R) :- 
-    reduct_test(R, X ?= Y),
-    reduct_test(R, X ?= a),
-    reduct_test(R, X ?= foo(a, Y)),
-    reduct_test(R, X ?= foo(a, X)),
-    reduct_test(R, foo(a, Y) ?= X),
-    reduct_test(R, foo(a, X) ?= X),
-    reduct_test(R, foo(X, Y) ?= foo(a, Y)),
-    reduct_test(R, foo(X, Y, Z) ?= foo(a, X)),
-    reduct_test(R, foo(a, Y) ?= bar(X, Y)).
-
-full_rule_tests() :-
-    echo('\n------Test de la règle rename------\n\n'), rule_tests(rename),
-    echo('\n-----Test de la règle simplify-----\n\n'), rule_tests(simplify),
-    echo('\n------Test de la règle expand------\n\n'), rule_tests(expand),
-    echo('\n------Test de la règle check------\n\n'), rule_tests(check),
-    echo('\n------Test de la règle orient------\n\n'), rule_tests(orient),
-    echo('\n-----Test de la règle decompose-----\n\n'), rule_tests(decompose),
-    echo('\n-------Test de la règle clash-------\n\n'), rule_tests(clash).
-
-full_reduct_tests() :-
-    echo('\n------Test de la réduction rename------\n\n'), reduct_tests(rename),
-    echo('\n-----Test de la réduction simplify-----\n\n'), reduct_tests(simplify),
-    echo('\n------Test de la réduction expand------\n\n'), reduct_tests(expand),
-    echo('\n------Test de la réduction check------\n\n'), reduct_tests(check),
-    echo('\n------Test de la réduction orient------\n\n'), reduct_tests(orient),
-    echo('\n-----Test de la réduction decompose-----\n\n'), reduct_tests(decompose),
-    echo('\n-------Test de la réduction clash-------\n\n'), reduct_tests(clash).
-
 % Fonction main
 main(Argv) :-
-    echo('Début des tests :\n'),
-    echo('//////////////Test des règles//////////////////\n'), full_rule_tests(),
-    nl,
-    echo('////////////Test des réductions////////////////\n'), full_reduct_tests(),
-    nl.
-    
+    echo(Argv).
 
 %------------------------------------------------------------------------------
 %//////////////////////////////////////////////////////////////////////////////
@@ -115,15 +66,15 @@ occur_check(V, T) :- contains_var(V, T).
 
 % Application de la règle du renommage
 % Vrai si on peut appliquer la règle du renommage, alors X prend la valeur de T et Q de P.
-reduit(rename, X ?= T, [X?=T|NEXT], Q) :- regle(X ?= T, rename), X = T, Q = NEXT.
+reduit(rename, X ?= T, NEXT, Q) :- regle(X ?= T, rename), X = T, Q = NEXT.
 
 % Application de la règle du renommage pour une constante (simplification)
 % Vrai si on peut appliquer la règle de simplification, alors X prend la valeur de T et Q de P.
-reduit(simplify, X ?= T, [X?=T|NEXT], Q) :- regle(X ?= T, simplify), X = T, Q = NEXT.
+reduit(simplify, X ?= T, NEXT, Q) :- regle(X ?= T, simplify), X = T, Q = NEXT.
 
 % Application de la règle d'expansion
 % Vrai si on peut appliquer la règle d'expansion, alors X prend la valeur de T et Q de P.
-reduit(expand, X ?= T, [X?=T|NEXT], Q) :- regle(X ?= T, expand), X = T, Q = NEXT.
+reduit(expand, X ?= T, NEXT, Q) :- regle(X ?= T, expand), X = T, Q = NEXT.
 
 % Application de la règle d'occur-check
 % Vrai si on peut appliquer la règle d'occur-check, alors fail.
@@ -131,23 +82,22 @@ reduit(check, X ?= T, P, Q) :- regle(X ?= T, check), fail.
 
 % Application de la règle d'orientation
 % Vrai si on peut appliquer la règle d'orientation, alors X prend la valeur de T.
-reduit(orient, T ?= X, [T?=X|NEXT], Q) :- regle(T ?= X, orient), X = T, Q = NEXT.
+reduit(orient, T ?= X, NEXT, Q) :- regle(T ?= X, orient), Q = [X ?= T|NEXT].
 
 % Application de la règle de décomposition
 % Vrai si on peut appliquer la règle de décomposition, alors on applique les arguments de F1 à F2.
-reduit(decompose, F1 ?= F2, [F1?=F2|NEXT], Q) :- regle(F1 ?= F2, decompose), F1 =.. [NAME1|LIST1], F2 =.. [NAME2|LIST2], decomposition(LIST1, LIST2, RES), Q = [RES|NEXT].
+reduit(decompose, F1 ?= F2, NEXT, Q) :- regle(F1 ?= F2, decompose), F1 =.. [NAME1|LIST1], F2 =.. [NAME2|LIST2], decomposition(LIST1, LIST2, RES), append(RES, NEXT, X), Q = X.
 
 % Application de la règle de conflit
 % Vrai si F et G sont deux fonctions qui n'ont pas la même arité, alors fail.
 reduit(clash, F ?= G, P, Q) :- regle(F ?= G, clash), fail.
 
 % Décomposition de deux listes pour appliquer l'opérateur sur ses membres
-decomposition([A|NEXT1], [B|NEXT2], RES) :- decomposition(NEXT1, NEXT2, [RES|A ?= B]).
-decomposition([], [], RES).
+decomposition([A|NEXT1], [B|NEXT2], [A ?= B|RES]) :- decomposition(NEXT1, NEXT2, RES).
+decomposition([], [], []).
 
 %--------------------------------------------------------
-% Prédicats pour lancer l'unification
+% Prédicats pour unifier
 %--------------------------------------------------------
-
-unifie([U]) :- reduit(_,A,U,Q), unifie(Q). 
 unifie([]).
+unifie([X|P]) :- reduit(_, X, P, Q), !, unifie(Q).
