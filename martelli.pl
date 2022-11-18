@@ -22,7 +22,7 @@ main(Argv) :-
 regle(X ?= T, rename) :- var(X), var(T).
 regle(X ?= T, simplify) :- var(X), functor(T, _, 0).
 regle(X ?= T, expand) :- var(X), compound(T), not(occur_check(X, T)).
-regle(X ?= T, check) :- var(X), occur_check(X, T).
+regle(X ?= T, check) :- var(X), occur_check(X, T), X \== T.
 regle(T ?= X, orient) :- not(var(T)), var(X).
 regle(F1 ?= F2, decompose) :- functor(F1, F, N), functor(F2, F, N).
 regle(F ?= G, clash) :- functor(F, _, _), functor(G, _, _).
