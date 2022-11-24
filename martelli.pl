@@ -1,4 +1,4 @@
-#!/usr/bin/env swipl
+#/usr/bin/env swipl
 
 :- op(20,xfy,?=).
 
@@ -109,6 +109,28 @@ unifie(P) :- unifie(P, choix_premier).
 %------------------------------------------------------------------------------
 
 unifie([], _).
-unifie(P, choix_premier) :- choix_premier(P, Q, _, _), !, unifie(Q, choix_premier).
+unifie(P, choix_premier) :- choix_premier(P, Q, _, _), unifie(Q, choix_premier).
+unifie(P, choix_pondere_1) :-
+	write("clash, "), choix_pondere_1(P, Q, _, clash), writeln("✓"), unifie(Q, choix_pondere_1);
+	write("check, "), choix_pondere_1(P, Q, _, check), writeln("✓"), unifie(Q, choix_pondere_1);
+	write("rename, "), choix_pondere_1(P, Q, _, rename), writeln("✓"), unifie(Q, choix_pondere_1);
+	write("orient, "), choix_pondere_1(P, Q, _, orient), writeln("✓"), unifie(Q, choix_pondere_1);
+	write("decompose, "), choix_pondere_1(P, Q, _, decompose), writeln("✓"), unifie(Q, choix_pondere_1);
+	write("expand, "), choix_pondere_1(P, Q, _, expand), writeln("✓"), unifie(Q, choix_pondere_1).
 
-choix_premier([X|NEXT], Q, X, R) :- reduit(R, X, NEXT, Q).
+unifie(P, choix_pondere_2) :-
+	write("decompose, "), choix_pondere_2(P, Q, _, decompose), writeln("✓"), unifie(Q, choix_pondere_2);
+	write("expand, "), choix_pondere_2(P, Q, _, expand), writeln("✓"), unifie(Q, choix_pondere_2);
+	write("check, "), choix_pondere_2(P, Q, _, check), writeln("✓"), unifie(Q, choix_pondere_2);
+	write("orient, "), choix_pondere_2(P, Q, _, orient), writeln("✓"), unifie(Q, choix_pondere_2);
+	write("clash, "), choix_pondere_2(P, Q, _, clash), writeln("✓"), unifie(Q, choix_pondere_2);
+	write("rename, "), choix_pondere_2(P, Q, _, rename), writeln("✓"), unifie(Q, choix_pondere_2).
+
+unifie(P, choix_aleatoire) :- choix_aleatoire(P, Q, _, _), unifie(Q, choix_aleatoire).
+
+choix_premier([X|NEXT], Q, X, R) :- writeln(R), reduit(R, X, NEXT, Q).
+
+choix_pondere_1([X|NEXT], Q, X, R) :- reduit(R, X, NEXT, Q).
+choix_pondere_2([X|NEXT], Q, X, R) :- reduit(R, X, NEXT, Q).
+
+choix_aleatoire(P, _, X, R) :- length(P, L), random_between(1, L, RANDOMIDX), nth1(RANDOMIDX, P, X), delete(P, X, N), reduit(R, X, N, Q).
