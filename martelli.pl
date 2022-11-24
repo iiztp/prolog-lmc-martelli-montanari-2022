@@ -53,8 +53,8 @@ regle(F1 ?= F2, decompose) :- not(var(F1)), not(var(F2)), functor(F1, F, N), fun
 
 % Prédicat de conflit
 % Vrai si F et G sont deux fonctions qui n'ont pas la même arité ou deux fonctions qui n'ont pas le même nom.
-regle(F ?= G, clash) :- not(var(F)), not(var(G)), functor(F, _, N), functor(G, _, M), not(N==M);
-    not(var(F)), not(var(G)), functor(F, FNAME, N), functor(G, GNAME, M), not(FNAME==GNAME).
+regle(F ?= G, clash) :- not(var(F)), not(var(G)), functor(F, _, N), functor(G, _, M), not(N==M).
+ regle(F ?= G, clash) :- not(var(F)), not(var(G)), functor(F, FNAME, _), functor(G, GNAME, _), not(FNAME==GNAME).
 
 % Prédicat d'occur-check
 % Vrai si V apparaît dans T.
@@ -78,7 +78,7 @@ reduit(expand, X ?= T, NEXT, Q) :- regle(X ?= T, expand), X = T, Q = NEXT.
 
 % Application de la règle d'occur-check
 % Vrai si on peut appliquer la règle d'occur-check, alors fail.
-reduit(check, X ?= T, P, Q) :- regle(X ?= T, check), fail.
+reduit(check, X ?= T, _, _) :- regle(X ?= T, check), fail.
 
 % Application de la règle d'orientation
 % Vrai si on peut appliquer la règle d'orientation, alors X prend la valeur de T.
@@ -86,11 +86,11 @@ reduit(orient, T ?= X, NEXT, Q) :- regle(T ?= X, orient), Q = [X ?= T|NEXT].
 
 % Application de la règle de décomposition
 % Vrai si on peut appliquer la règle de décomposition, alors on applique les arguments de F1 à F2.
-reduit(decompose, F1 ?= F2, NEXT, Q) :- regle(F1 ?= F2, decompose), F1 =.. [NAME1|LIST1], F2 =.. [NAME2|LIST2], decomposition(LIST1, LIST2, RES), append(RES, NEXT, X), Q = X.
+reduit(decompose, F1 ?= F2, NEXT, Q) :- regle(F1 ?= F2, decompose), F1 =.. [_|LIST1], F2 =.. [_|LIST2], decomposition(LIST1, LIST2, RES), append(RES, NEXT, X), Q = X.
 
 % Application de la règle de conflit
 % Vrai si F et G sont deux fonctions qui n'ont pas la même arité, alors fail.
-reduit(clash, F ?= G, P, Q) :- regle(F ?= G, clash), fail.
+reduit(clash, F ?= G, _, _) :- regle(F ?= G, clash), fail.
 
 % Décomposition de deux listes pour appliquer l'opérateur sur ses membres
 decomposition([A|NEXT1], [B|NEXT2], [A ?= B|RES]) :- decomposition(NEXT1, NEXT2, RES).
@@ -99,5 +99,16 @@ decomposition([], [], []).
 %--------------------------------------------------------
 % Prédicats pour unifier
 %--------------------------------------------------------
-unifie([]).
-unifie([X|P]) :- reduit(_, X, P, Q), !, unifie(Q).
+unifie(P) :- unifie(P, choix_premier).
+
+
+%------------------------------------------------------------------------------
+%//////////////////////////////////////////////////////////////////////////////
+%////                           Question 2                                 ////
+%//////////////////////////////////////////////////////////////////////////////
+%------------------------------------------------------------------------------
+
+unifie([], _).
+unifie(P, choix_premier) :- choix_premier(P, Q, _, _), !, unifie(Q, choix_premier).
+
+choix_premier([X|NEXT], Q, X, R) :- reduit(R, X, NEXT, Q).
