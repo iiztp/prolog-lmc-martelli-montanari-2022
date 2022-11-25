@@ -128,10 +128,17 @@ unifie(P, choix_regle_aleatoire) :- choix_regle_aleatoire(P, Q, _, _), unifie(Q,
 % Prédicats choisissant les formules / règles
 %--------------------------------------------------------
 choix_premier([X|NEXT], Q, X, R) :- reduit(R, X, NEXT, Q).
-choix_pondere_1([X|L], Q, X, R) :- ponde_1(LPOND), apply_rules(P, Q, X, LPOND).
-choix_pondere_2([X|L], Q, X, R) :- ponde_2(LPOND), apply_rules(P, Q, X, LPOND).
+choix_pondere_1([X|NEXT], Q, X, R) :- ponde_1([R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
+choix_pondere_2([X|NEXT], Q, X, R) :- ponde_2([R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
 choix_formule_aleatoire(P, Q, X, R) :- random_permutation(P, [X|N]), reduit(R, X, N, Q).
-choix_regle_aleatoire([X|NEXT], Q, X, R) :- rule_list(REGLES), random_permutation(REGLES, RREGLES), apply_rules(P, Q, X, RREGLES).
+choix_regle_aleatoire([X|NEXT], Q, X, R) :- rule_list(REGLES), random_permutation(REGLES, [R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
 
 % Prédicat appliquant les règles dans l'ordre de la liste à la variable X
 apply_rules(P, Q, X, [R|RNEXT]) :- reduit(R, X, P, Q); apply_rules(P, Q, X, RNEXT).
+
+% Prédicat de test pour vérifier le runtime de chaque stratégie
+statistics_on(P, S) :- statistics(runtime,[START|_]),
+                    unifie(P, S),
+                    statistics(runtime,[STOP|_]),
+                    RUNTIME is STOP - START,
+                    write("Resultat pour "), write(S), write(", runtime : "), write(RUNTIME), writeln("ms").
