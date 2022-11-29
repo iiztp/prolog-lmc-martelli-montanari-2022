@@ -113,16 +113,16 @@ ponde_2([decompose|[expand|[check|[orient|[clash|[simplify|[rename]]]]]]]).
 %--------------------------------------------------------
 unifie([], _).
 unifie(P, choix_premier) :- echo_tab(P), choix_premier(P, Q, _, _), unifie(Q, choix_premier).
-unifie(P, choix_pondere_1) :- choix_pondere_1(P, Q, _, _), unifie(Q, choix_pondere_1).
-unifie(P, choix_pondere_2) :- choix_pondere_2(P, Q, _, _), unifie(Q, choix_pondere_2).
-unifie(P, choix_formule_aleatoire) :- choix_formule_aleatoire(P, Q, _, _), unifie(Q, choix_formule_aleatoire).
-unifie(P, choix_regle_aleatoire) :- choix_regle_aleatoire(P, Q, _, _), unifie(Q, choix_regle_aleatoire).
+unifie(P, choix_pondere_1) :- echo_tab(P), choix_pondere_1(P, Q, _, _), unifie(Q, choix_pondere_1).
+unifie(P, choix_pondere_2) :- echo_tab(P), choix_pondere_2(P, Q, _, _), unifie(Q, choix_pondere_2).
+unifie(P, choix_formule_aleatoire) :- echo_tab(P), choix_formule_aleatoire(P, Q, _, _), unifie(Q, choix_formule_aleatoire).
+unifie(P, choix_regle_aleatoire) :- echo_tab(P), choix_regle_aleatoire(P, Q, _, _), unifie(Q, choix_regle_aleatoire).
 
 %--------------------------------------------------------
 % Prédicats choisissant les formules / règles
 %--------------------------------------------------------
-choix_premier([X|NEXT], Q, X, R) :- reduit(R, X, NEXT, Q), .
-choix_pondere_1([X|NEXT], Q, X, R) :- ponde_1([R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
+choix_premier([X|NEXT], Q, X, R) :- reduit(R, X, NEXT, Q).
+choix_pondere_1([X|NEXT], Q, X, R) :- ponde_1([R|NREGLES]), apply_rules([X|NEXT], [X|NEXT], Q, X, [R|NREGLES]).
 choix_pondere_2([X|NEXT], Q, X, R) :- ponde_2([R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
 choix_formule_aleatoire(P, Q, X, R) :- random_permutation(P, [X|N]), reduit(R, X, N, Q).
 choix_regle_aleatoire([X|NEXT], Q, X, R) :- rule_list(REGLES), random_permutation(REGLES, [R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
