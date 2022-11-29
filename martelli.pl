@@ -128,8 +128,12 @@ unifie(P, choix_regle_aleatoire) :- echo_tab(P), choix_regle_aleatoire(P, Q), un
 %--------------------------------------------------------
 choix_premier(P, Q) :- [X|_] = P, reduit(_, X, P, Q).
 
-choix_pondere_1(P, Q) :- ponde_1(RULES), apply_rules(P, Q, RULES), write("P: "), writeln(P), write("Q: "), writeln(Q), choix_pondere_1(Q, _).
-% choix_pondere_2([X|NEXT], Q) :- ponde_2(RULES), apply_rules(NEXT, Q, X, RULES).
+choix_pondere_1(P, Q) :-
+    ponde_1(RULES), select_eq(P, RULES, EQ),
+    reduit(_, EQ, P, Q).
+choix_pondere_2(P, Q) :-
+    ponde_2(RULES), select_eq(P, RULES, EQ),
+    reduit(_, EQ, P, Q).
 
 choix_formule_aleatoire(P, Q) :- random_permutation(P, NP), choix_premier(NP, Q).
 choix_regle_aleatoire(P, Q) :- rule_list(REGLES), random_permutation(REGLES, NREGLES), apply_rules(P, Q, NREGLES).
@@ -148,6 +152,14 @@ reduit_all(RULE, [E|NEXT], P, Q) :-
     reduit(RULE, E, P, Q), !
     ;
     reduit_all(RULE, P, NEXT, Q).
+
+select_eq(P, [RULES|NEXT], E) :-
+    select_eq_aux(P, RULES, E); select_eq(P, NEXT, E).
+select_eq_aux(P, [RULE|NEXT], E) :-
+    select_eq_aux2(P, RULE, E); select_eq_aux(P, NEXT, E).
+select_eq_aux2([EQ|NEXT], RULE, E) :-
+    regle(EQ, RULE) -> E = EQ; select_eq_aux2(NEXT, RULE, E).
+
 
 % Prédicat de test pour vérifier le runtime de chaque stratégie
 statistics_on(P, S) :- statistics(runtime,[START|_]),
