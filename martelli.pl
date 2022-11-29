@@ -122,7 +122,7 @@ unifie(P, choix_regle_aleatoire) :- echo_tab(P), choix_regle_aleatoire(P, Q, _, 
 % Prédicats choisissant les formules / règles
 %--------------------------------------------------------
 choix_premier([X|NEXT], Q, X, R) :- reduit(R, X, NEXT, Q).
-choix_pondere_1([X|NEXT], Q, X, R) :- ponde_1([R|NREGLES]), apply_rules([X|NEXT], [X|NEXT], Q, X, [R|NREGLES]).
+choix_pondere_1([X|NEXT], Q, X, R) :- ponde_1([R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
 choix_pondere_2([X|NEXT], Q, X, R) :- ponde_2([R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
 choix_formule_aleatoire(P, Q, X, R) :- random_permutation(P, [X|N]), reduit(R, X, N, Q).
 choix_regle_aleatoire([X|NEXT], Q, X, R) :- rule_list(REGLES), random_permutation(REGLES, [R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
