@@ -66,31 +66,31 @@ occur_check(V, T) :- contains_var(V, T).
 
 % Application de la règle du renommage
 % Vrai si on peut appliquer la règle du renommage, alors X prend la valeur de T et Q de P.
-reduit(rename, X ?= T, NEXT, Q) :- regle(X ?= T, rename), X = T, Q = NEXT.
+reduit(rename, X ?= T, NEXT, Q) :- regle(X ?= T, rename), echo_rule(rename, X ?= T), X = T, Q = NEXT.
 
 % Application de la règle du renommage pour une constante (simplification)
 % Vrai si on peut appliquer la règle de simplification, alors X prend la valeur de T et Q de P.
-reduit(simplify, X ?= T, NEXT, Q) :- regle(X ?= T, simplify), X = T, Q = NEXT.
+reduit(simplify, X ?= T, NEXT, Q) :- regle(X ?= T, simplify), echo_rule(simplify, X ?= T), X = T, Q = NEXT.
 
 % Application de la règle d'expansion
 % Vrai si on peut appliquer la règle d'expansion, alors X prend la valeur de T et Q de P.
-reduit(expand, X ?= T, NEXT, Q) :- regle(X ?= T, expand), X = T, Q = NEXT.
+reduit(expand, X ?= T, NEXT, Q) :- regle(X ?= T, expand), echo_rule(expand, X ?= T), X = T, Q = NEXT.
 
 % Application de la règle d'occur-check
 % Vrai si on peut appliquer la règle d'occur-check, alors fail.
-reduit(check, X ?= T, _, _) :- regle(X ?= T, check), fail.
+reduit(check, X ?= T, _, _) :- regle(X ?= T, check), echo_rule(check, X ?= T), fail.
 
 % Application de la règle d'orientation
 % Vrai si on peut appliquer la règle d'orientation, alors X prend la valeur de T.
-reduit(orient, T ?= X, NEXT, Q) :- regle(T ?= X, orient), Q = [X ?= T|NEXT].
+reduit(orient, T ?= X, NEXT, Q) :- regle(T ?= X, orient), echo_rule(orient, T ?= X), Q = [X ?= T|NEXT].
 
 % Application de la règle de décomposition
 % Vrai si on peut appliquer la règle de décomposition, alors on applique les arguments de F1 à F2.
-reduit(decompose, F1 ?= F2, NEXT, Q) :- regle(F1 ?= F2, decompose), F1 =.. [_|LIST1], F2 =.. [_|LIST2], decomposition(LIST1, LIST2, RES), append(RES, NEXT, X), Q = X.
+reduit(decompose, F1 ?= F2, NEXT, Q) :- regle(F1 ?= F2, decompose), echo_rule(decompose, F1 ?= F2), F1 =.. [_|LIST1], F2 =.. [_|LIST2], decomposition(LIST1, LIST2, RES), append(RES, NEXT, X), Q = X.
 
 % Application de la règle de conflit
 % Vrai si F et G sont deux fonctions qui n'ont pas la même arité, alors fail.
-reduit(clash, F ?= G, _, _) :- regle(F ?= G, clash), fail.
+reduit(clash, F ?= G, _, _) :- regle(F ?= G, clash), echo_rule(clash, F ?= G), fail.
 
 % Décomposition de deux listes pour appliquer l'opérateur sur ses membres
 decomposition([A|NEXT1], [B|NEXT2], [A ?= B|RES]) :- decomposition(NEXT1, NEXT2, RES).
@@ -118,7 +118,7 @@ ponde_2([decompose|[expand|[check|[orient|[clash|[simplify|[rename]]]]]]]).
 % Prédicats d'unification par stratégie
 %--------------------------------------------------------
 unifie([], _).
-unifie(P, choix_premier) :- choix_premier(P, Q, _, _), unifie(Q, choix_premier).
+unifie(P, choix_premier) :- echo_tab(P), choix_premier(P, Q, _, _), unifie(Q, choix_premier).
 unifie(P, choix_pondere_1) :- choix_pondere_1(P, Q, _, _), unifie(Q, choix_pondere_1).
 unifie(P, choix_pondere_2) :- choix_pondere_2(P, Q, _, _), unifie(Q, choix_pondere_2).
 unifie(P, choix_formule_aleatoire) :- choix_formule_aleatoire(P, Q, _, _), unifie(Q, choix_formule_aleatoire).
@@ -142,3 +142,15 @@ statistics_on(P, S) :- statistics(runtime,[START|_]),
                     statistics(runtime,[STOP|_]),
                     RUNTIME is STOP - START,
                     write("Resultat pour "), write(S), write(", runtime : "), write(RUNTIME), writeln("ms").
+
+%------------------------------------------------------------------------------
+%//////////////////////////////////////////////////////////////////////////////
+%////                           Question 3                                 ////
+%//////////////////////////////////////////////////////////////////////////////
+%------------------------------------------------------------------------------
+
+unif(P, S) :- clr_echo, unifie(P, S).
+trace_unif(P, S) :- set_echo, unifie(P, S).
+
+echo_tab(P) :- echo('system: '), echo(P), echo('\n').
+echo_rule(R, X) :- echo(R), echo(': '), echo(X), echo('\n').
