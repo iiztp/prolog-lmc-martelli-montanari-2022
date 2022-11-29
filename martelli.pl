@@ -11,12 +11,6 @@ clr_echo :- retractall(echo_on).
 echo(T) :- echo_on, !, write(T).
 echo(_).
 
-:- set_echo, initialization(main, main).
-
-% Fonction main
-main(Argv) :-
-    echo(Argv).
-
 %------------------------------------------------------------------------------
 %//////////////////////////////////////////////////////////////////////////////
 %////                           Question 1                                 ////
@@ -127,7 +121,7 @@ unifie(P, choix_regle_aleatoire) :- choix_regle_aleatoire(P, Q, _, _), unifie(Q,
 %--------------------------------------------------------
 % Prédicats choisissant les formules / règles
 %--------------------------------------------------------
-choix_premier([X|NEXT], Q, X, R) :- reduit(R, X, NEXT, Q).
+choix_premier([X|NEXT], Q, X, R) :- reduit(R, X, NEXT, Q), .
 choix_pondere_1([X|NEXT], Q, X, R) :- ponde_1([R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
 choix_pondere_2([X|NEXT], Q, X, R) :- ponde_2([R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
 choix_formule_aleatoire(P, Q, X, R) :- random_permutation(P, [X|N]), reduit(R, X, N, Q).
