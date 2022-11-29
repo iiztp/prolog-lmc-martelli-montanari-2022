@@ -60,15 +60,15 @@ occur_check(V, T) :- contains_var(V, T).
 
 % Application de la règle du renommage
 % Vrai si on peut appliquer la règle du renommage, alors X prend la valeur de T et Q de P.
-reduit(rename, X ?= T, NEXT, Q) :- regle(X ?= T, rename), echo_rule(rename, X ?= T), X = T, Q = NEXT.
+reduit(rename, X ?= T, P, Q) :- regle(X ?= T, rename), echo_rule(rename, X ?= T), X = T, select(X?=T, P, Q).
 
 % Application de la règle du renommage pour une constante (simplification)
 % Vrai si on peut appliquer la règle de simplification, alors X prend la valeur de T et Q de P.
-reduit(simplify, X ?= T, NEXT, Q) :- regle(X ?= T, simplify), echo_rule(simplify, X ?= T), X = T, Q = NEXT.
+reduit(simplify, X ?= T, P, Q) :- regle(X ?= T, simplify), echo_rule(simplify, X ?= T), X = T, select(X ?= T, P, Q).
 
 % Application de la règle d'expansion
 % Vrai si on peut appliquer la règle d'expansion, alors X prend la valeur de T et Q de P.
-reduit(expand, X ?= T, NEXT, Q) :- regle(X ?= T, expand), echo_rule(expand, X ?= T), X = T, Q = NEXT.
+reduit(expand, X ?= T, P, Q) :- regle(X ?= T, expand), echo_rule(expand, X ?= T), X = T, select(X ?= T, P, Q).
 
 % Application de la règle d'occur-check
 % Vrai si on peut appliquer la règle d'occur-check, alors fail.
@@ -76,11 +76,16 @@ reduit(check, X ?= T, _, _) :- regle(X ?= T, check), echo_rule(check, X ?= T), f
 
 % Application de la règle d'orientation
 % Vrai si on peut appliquer la règle d'orientation, alors X prend la valeur de T.
-reduit(orient, T ?= X, NEXT, Q) :- regle(T ?= X, orient), echo_rule(orient, T ?= X), Q = [X ?= T|NEXT].
+reduit(orient, T ?= X, P, Q) :- regle(T ?= X, orient), echo_rule(orient, T ?= X), select(T ?= X, P, RES), append(RES, [X ?= T], Q).
 
 % Application de la règle de décomposition
 % Vrai si on peut appliquer la règle de décomposition, alors on applique les arguments de F1 à F2.
-reduit(decompose, F1 ?= F2, NEXT, Q) :- regle(F1 ?= F2, decompose), echo_rule(decompose, F1 ?= F2), F1 =.. [_|LIST1], F2 =.. [_|LIST2], decomposition(LIST1, LIST2, RES), append(RES, NEXT, X), Q = X.
+reduit(decompose, F1 ?= F2, P, Q) :- 
+    regle(F1 ?= F2, decompose), echo_rule(decompose, F1 ?= F2),
+    F1 =.. [_|LIST1], F2 =.. [_|LIST2],
+    decomposition(LIST1, LIST2, RES),
+    select(F1?=F2, P, NEXT),
+    append(RES, NEXT, Q).
 
 % Application de la règle de conflit
 % Vrai si F et G sont deux fonctions qui n'ont pas la même arité, alors fail.
@@ -104,31 +109,45 @@ unifie(P) :- unifie(P, choix_premier).
 %--------------------------------------------------------
 % Faits listant les règles (ordonnées)
 %--------------------------------------------------------
-rule_list([clash|[check|[rename|[simplify|[orient|[decompose|[expand]]]]]]]).
-ponde_1([clash|[check|[rename|[simplify|[orient|[decompose|[expand]]]]]]]).
-ponde_2([decompose|[expand|[check|[orient|[clash|[simplify|[rename]]]]]]]).
+rule_list([[clash], [check], [rename], [simplify], [orient], [decompose], [expand]]).
+ponde_1([[clash, check], [rename, simplify], [orient], [decompose], [expand]]).
+ponde_2([[decompose], [expand, check], [orient], [clash, simplify], [rename]]).
 
 %--------------------------------------------------------
 % Prédicats d'unification par stratégie
 %--------------------------------------------------------
 unifie([], _).
-unifie(P, choix_premier) :- echo_tab(P), choix_premier(P, Q, _, _), unifie(Q, choix_premier).
-unifie(P, choix_pondere_1) :- echo_tab(P), choix_pondere_1(P, Q, _, _), unifie(Q, choix_pondere_1).
-unifie(P, choix_pondere_2) :- echo_tab(P), choix_pondere_2(P, Q, _, _), unifie(Q, choix_pondere_2).
-unifie(P, choix_formule_aleatoire) :- echo_tab(P), choix_formule_aleatoire(P, Q, _, _), unifie(Q, choix_formule_aleatoire).
-unifie(P, choix_regle_aleatoire) :- echo_tab(P), choix_regle_aleatoire(P, Q, _, _), unifie(Q, choix_regle_aleatoire).
+unifie(P, choix_premier) :- echo_tab(P), choix_premier(P, Q), unifie(Q, choix_premier).
+unifie(P, choix_pondere_1) :- echo_tab(P), choix_pondere_1(P, Q), unifie(Q, choix_pondere_1).
+unifie(P, choix_pondere_2) :- echo_tab(P), choix_pondere_2(P, Q), unifie(Q, choix_pondere_2).
+unifie(P, choix_formule_aleatoire) :- echo_tab(P), choix_formule_aleatoire(P, Q), unifie(Q, choix_formule_aleatoire).
+unifie(P, choix_regle_aleatoire) :- echo_tab(P), choix_regle_aleatoire(P, Q), unifie(Q, choix_regle_aleatoire).
 
 %--------------------------------------------------------
 % Prédicats choisissant les formules / règles
 %--------------------------------------------------------
-choix_premier([X|NEXT], Q, X, R) :- reduit(R, X, NEXT, Q).
-choix_pondere_1([X|NEXT], Q, X, R) :- ponde_1([R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
-choix_pondere_2([X|NEXT], Q, X, R) :- ponde_2([R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
-choix_formule_aleatoire(P, Q, X, R) :- random_permutation(P, [X|N]), reduit(R, X, N, Q).
-choix_regle_aleatoire([X|NEXT], Q, X, R) :- rule_list(REGLES), random_permutation(REGLES, [R|NREGLES]), apply_rules(NEXT, Q, X, [R|NREGLES]).
+choix_premier(P, Q) :- [X|_] = P, reduit(_, X, P, Q).
 
-% Prédicat appliquant les règles dans l'ordre de la liste à la variable X
-apply_rules(P, Q, X, [R|RNEXT]) :- reduit(R, X, P, Q); apply_rules(P, Q, X, RNEXT).
+choix_pondere_1(P, Q) :- ponde_1(RULES), apply_rules(P, Q, RULES), write("P: "), writeln(P), write("Q: "), writeln(Q), choix_pondere_1(Q, _).
+% choix_pondere_2([X|NEXT], Q) :- ponde_2(RULES), apply_rules(NEXT, Q, X, RULES).
+
+choix_formule_aleatoire(P, Q) :- random_permutation(P, NP), choix_premier(NP, Q).
+choix_regle_aleatoire(P, Q) :- rule_list(REGLES), random_permutation(REGLES, NREGLES), apply_rules(P, Q, NREGLES).
+
+% Prédicat appliquant les règles dans l'ordre de la liste à l'équation E   '
+apply_rules(P, Q, [RULES|NEXT_RULES]) :-
+    try_rules(P, Q, RULES);
+    apply_rules(P, Q, NEXT_RULES).
+
+try_rules(P, Q, [RULE|NEXT]) :-
+    reduit_all(RULE, P, P, Q), !
+    ;
+    try_rules(P, Q, NEXT).
+
+reduit_all(RULE, [E|NEXT], P, Q) :-
+    reduit(RULE, E, P, Q), !
+    ;
+    reduit_all(RULE, P, NEXT, Q).
 
 % Prédicat de test pour vérifier le runtime de chaque stratégie
 statistics_on(P, S) :- statistics(runtime,[START|_]),
