@@ -35,7 +35,7 @@ regle(X ?= T, expand) :- var(X), \+(occur_check(X, T)).
 
 % Prédicat d'occur-check
 % Vrai si X est une variable et que X apparaît dans T.
-regle(X ?= T, check) :- var(X), occur_check(X, T), \+(X==T).
+regle(X ?= T, check) :- var(X), occur_check(X, T).
 
 % Prédicat d'orientation
 % Vrai si T n'est pas une variable et que X est une variable.
@@ -52,7 +52,7 @@ regle(F ?= G, clash) :- \+(var(F)), \+(var(G)), functor(F, FNAME, _), functor(G,
 
 % Prédicat d'occur-check
 % Vrai si V apparaît dans T.
-occur_check(V, T) :- contains_var(V, T).
+occur_check(V, T) :- compound(T), contains_var(V, T).
 
 %--------------------------------------------------------
 % Prédicats de réduction pour appliquer les règles
