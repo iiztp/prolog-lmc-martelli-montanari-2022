@@ -31,7 +31,7 @@ regle(X ?= T, simplify) :- var(X), \+(var(T)), functor(T, _, 0).
 
 % Prédicat d'expansion
 % Vrai si X est une variable, T est composé et X n'apparaît pas dans T.
-regle(X ?= T, expand) :- var(X), compound(T), \+(occur_check(X, T)).
+regle(X ?= T, expand) :- var(X), \+(occur_check(X, T)).
 
 % Prédicat d'occur-check
 % Vrai si X est une variable et que X apparaît dans T.
