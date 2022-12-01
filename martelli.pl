@@ -60,15 +60,15 @@ occur_check(V, T) :- contains_var(V, T).
 
 % Application de la règle du renommage
 % Vrai si on peut appliquer la règle du renommage, alors X prend la valeur de T et Q de P.
-reduit(rename, X ?= T, P, Q) :- X = T, select(X?=T, P, Q).
+reduit(rename, X ?= T, P, Q) :- X = T, ord_subtract(P, [X?=T], Q).
 
 % Application de la règle du renommage pour une constante (simplification)
 % Vrai si on peut appliquer la règle de simplification, alors X prend la valeur de T et Q de P.
-reduit(simplify, X ?= T, P, Q) :- X = T, select(X ?= T, P, Q).
+reduit(simplify, X ?= T, P, Q) :- X = T, ord_subtract(P, [X ?= T], Q).
 
 % Application de la règle d'expansion
 % Vrai si on peut appliquer la règle d'expansion, alors X prend la valeur de T et Q de P.
-reduit(expand, X ?= T, P, Q) :- X = T, select(X ?= T, P, Q).
+reduit(expand, X ?= T, P, Q) :- X = T, ord_subtract(P, [X ?= T], Q).
 
 % Application de la règle d'occur-check
 % Vrai si on peut appliquer la règle d'occur-check, alors fail.
@@ -76,14 +76,14 @@ reduit(check, _, _, _) :- false.
 
 % Application de la règle d'orientation
 % Vrai si on peut appliquer la règle d'orientation, alors X prend la valeur de T.
-reduit(orient, T ?= X, P, Q) :- select(T ?= X, P, RES), append(RES, [X ?= T], Q).
+reduit(orient, T ?= X, P, Q) :- ord_subtract(P, [T ?= X], RES), append(RES, [X ?= T], Q).
 
 % Application de la règle de décomposition
 % Vrai si on peut appliquer la règle de décomposition, alors on applique les arguments de F1 à F2.
 reduit(decompose, F1 ?= F2, P, Q) :- 
         F1 =.. [_|LIST1], F2 =.. [_|LIST2],
+        ord_subtract(P, [F1?=F2], NEXT),
         decomposition(LIST1, LIST2, RES),
-        select(F1?=F2, P, NEXT),
         append(RES, NEXT, Q).
 
 % Application de la règle de conflit
@@ -91,7 +91,7 @@ reduit(decompose, F1 ?= F2, P, Q) :-
 reduit(clash, _, _, _) :- false.
 
 % Décomposition de deux listes pour appliquer l'opérateur sur ses membres
-decomposition([A|NEXT1], [B|NEXT2], [A ?= B|RES]) :- decomposition(NEXT1, NEXT2, RES).
+decomposition([A|NEXT1], [B|NEXT2], RES) :- decomposition(NEXT1, NEXT2, T), append([A ?= B], T, RES).
 decomposition([], [], []).
 
 %--------------------------------------------------------
@@ -116,7 +116,7 @@ ponde_2([[decompose], [expand, check], [orient], [clash, simplify], [rename]]).
 % Prédicats d'unification par stratégie
 %--------------------------------------------------------
 unifie([], _).
-unifie(P, S) :- echo_tab(P), call(S, P, Q, E, R), !, echo_rule(R, E), reduit(R, E, P, Q), unifie(Q, S).
+unifie(P, S) :- echo_tab(P), call(S, P, Q, E, R), echo_rule(R, E), (reduit(R, E, P, Q) -> unifie(Q, S); false).
 
 %--------------------------------------------------------
 % Prédicats choisissant les formules / règles
