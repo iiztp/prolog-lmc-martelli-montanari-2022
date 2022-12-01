@@ -35,7 +35,7 @@ regle(X ?= T, expand) :- var(X), compound(T), \+(occur_check(X, T)).
 
 % Prédicat d'occur-check
 % Vrai si X est une variable et que X apparaît dans T.
-regle(X ?= T, check) :- var(X), occur_check(X, T).
+regle(X ?= T, check) :- var(X), occur_check(X, T), \+(X==T).
 
 % Prédicat d'orientation
 % Vrai si T n'est pas une variable et que X est une variable.
@@ -52,7 +52,7 @@ regle(F ?= G, clash) :- \+(var(F)), \+(var(G)), functor(F, FNAME, _), functor(G,
 
 % Prédicat d'occur-check
 % Vrai si V apparaît dans T.
-occur_check(V, T) :- compound(T), contains_var(V, T).
+occur_check(V, T) :- contains_var(V, T).
 
 %--------------------------------------------------------
 % Prédicats de réduction pour appliquer les règles
@@ -76,7 +76,7 @@ reduit(check, _, _, _) :- false.
 
 % Application de la règle d'orientation
 % Vrai si on peut appliquer la règle d'orientation, alors X prend la valeur de T.
-reduit(orient, T ?= X, P, Q) :- select(T ?= X, P, RES), append(RES, [X ?= T], Q).
+reduit(orient, T ?= X, P, Q) :- append(RES, [X ?= T], Q), select(T ?= X, P, RES).
 
 % Application de la règle de décomposition
 % Vrai si on peut appliquer la règle de décomposition, alors on applique les arguments de F1 à F2.
@@ -116,7 +116,7 @@ ponde_2([[decompose], [expand, check], [orient], [clash, simplify], [rename]]).
 % Prédicats d'unification par stratégie
 %--------------------------------------------------------
 unifie([], _).
-unifie(P, S) :- echo_tab(P), call(S, P, Q, E, R), !, echo_rule(R, E), (reduit(R, E, P, Q) -> unifie(Q, S); false).
+unifie(P, S) :- echo_tab(P), call(S, P, Q, E, R), echo_rule(R, E), (reduit(R, E, P, Q) -> unifie(Q, S); false).
 
 %--------------------------------------------------------
 % Prédicats choisissant les formules / règles
@@ -137,8 +137,8 @@ select_eq_aux(P, [RULE|NEXT], E, R) :- select_eq_aux2(P, RULE, E, R); select_eq_
 select_eq_aux2([EQ|NEXT], RULE, E, R) :- regle(EQ, RULE) -> E = EQ, R = RULE; select_eq_aux2(NEXT, RULE, E, R).
 
 % Prédicat de test pour vérifier le runtime de chaque stratégie
-statistics_on(P, S) :- clr_echo, statistics(runtime,[START|_]),
-                    (unifie(P, S); true) ->
+statistics_on(P, S) :- statistics(runtime,[START|_]),
+                    unifie(P, S),
                     statistics(runtime,[STOP|_]),
                     RUNTIME is STOP - START,
                     write("Resultat pour "), write(S), write(", runtime : "), write(RUNTIME), writeln("ms").
