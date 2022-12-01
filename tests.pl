@@ -11,7 +11,7 @@ rule_tests(R) :-
     rule_test(foo(X, Y, Z) ?= foo(a, X), R),
     rule_test(foo(a, Y) ?= bar(X, Y), R).
 
-reduct_test(reduit(R, X, [X], Q)) :- (reduit(R, X, [X], Q) -> echo([X]) ; echo('Unapplicable')).
+reduct_test(reduit(R, X, [X], Q)) :- (regle(X, R) -> (reduit(R, X, [X], Q) -> echo(Q) ; echo('False')); echo('Unapplicable')).
 reduct_test(R, X) :- echo('Test \''), echo(X), echo('\' : '), reduct_test(reduit(R, X, [X], Q)), echo('\n').
 reduct_tests(R) :- 
     reduct_test(R, X ?= Y),
@@ -48,3 +48,7 @@ echo('Début des tests :\n'),
     nl,
     echo('////////////Test des réductions////////////////\n'), full_reduct_tests(),
     nl.*/
+[f(X, f(a, b), Y) ?= X, g(h(a)) ?= g(Y)]
+[a ?= A, a ?= B, a ?= C, a ?= D, a ?= E, a ?= F, a ?= G, a ?= H, a ?= I, a ?= J, a ?= K, a ?= L, a ?= M, a ?= N, a ?= O, a ?= P, a ?= Q, a ?= R, a ?= S, a ?= T, a ?= U, a ?= V, a ?= W, a ?= X, a ?= Y, a ?= Z,a?=b]
+[h(u, X, Y) ?= h(f(X), Z, Y)]
+[f(f(f(X))) ?= f(f(Y)), g(A, f(B), h(C, a)) ?= g(f(x), A, D)]

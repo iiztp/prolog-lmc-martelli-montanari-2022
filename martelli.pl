@@ -31,7 +31,7 @@ regle(X ?= T, simplify) :- var(X), \+(var(T)), functor(T, _, 0).
 
 % Prédicat d'expansion
 % Vrai si X est une variable, T est composé et X n'apparaît pas dans T.
-regle(X ?= T, expand) :- var(X), \+(occur_check(X, T)).
+regle(X ?= T, expand) :- var(X), compound(T), \+(occur_check(X, T)).
 
 % Prédicat d'occur-check
 % Vrai si X est une variable et que X apparaît dans T.
@@ -116,7 +116,7 @@ ponde_2([[decompose], [expand, check], [orient], [clash, simplify], [rename]]).
 % Prédicats d'unification par stratégie
 %--------------------------------------------------------
 unifie([], _).
-unifie(P, S) :- echo_tab(P), call(S, P, Q, E, R), !, echo_rule(R, E), reduit(R, E, P, Q), unifie(Q, S).
+unifie(P, S) :- echo_tab(P), call(S, P, Q, E, R), !, echo_rule(R, E), (reduit(R, E, P, Q) -> unifie(Q, S); false).
 
 %--------------------------------------------------------
 % Prédicats choisissant les formules / règles
@@ -137,8 +137,8 @@ select_eq_aux(P, [RULE|NEXT], E, R) :- select_eq_aux2(P, RULE, E, R); select_eq_
 select_eq_aux2([EQ|NEXT], RULE, E, R) :- regle(EQ, RULE) -> E = EQ, R = RULE; select_eq_aux2(NEXT, RULE, E, R).
 
 % Prédicat de test pour vérifier le runtime de chaque stratégie
-statistics_on(P, S) :- statistics(runtime,[START|_]),
-                    unifie(P, S),
+statistics_on(P, S) :- clr_echo, statistics(runtime,[START|_]),
+                    (unifie(P, S); true) ->
                     statistics(runtime,[STOP|_]),
                     RUNTIME is STOP - START,
                     write("Resultat pour "), write(S), write(", runtime : "), write(RUNTIME), writeln("ms").
